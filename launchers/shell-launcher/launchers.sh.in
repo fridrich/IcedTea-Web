@@ -211,6 +211,11 @@ if [ "x$MODULAR_JDK" == "xYES" ] ; then
   COMMAND[k]="@$RUN_ARGS_LOCATION"
   k=$((k+1))
 fi
+# JDK 18-23 refuse System.setSecurityManager unless allowed at startup; 9-11 and 24+ do not start with it
+if [ "$version" -ge "18" -a "$version" -le "23" ] ; then
+  COMMAND[k]="-Djava.security.manager=allow"
+  k=$((k+1))
+fi
 
 
 i=0

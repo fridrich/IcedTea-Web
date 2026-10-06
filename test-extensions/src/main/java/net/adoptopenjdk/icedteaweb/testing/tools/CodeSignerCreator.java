@@ -25,23 +25,12 @@
 
 package net.adoptopenjdk.icedteaweb.testing.tools;
 
-import net.adoptopenjdk.icedteaweb.JavaSystemProperties;
-import sun.security.x509.AlgorithmId;
-import sun.security.x509.CertificateAlgorithmId;
-import sun.security.x509.CertificateIssuerName;
-import sun.security.x509.CertificateSerialNumber;
-import sun.security.x509.CertificateSubjectName;
-import sun.security.x509.CertificateValidity;
-import sun.security.x509.CertificateVersion;
 import sun.security.x509.X500Name;
-import sun.security.x509.X509CertImpl;
-import sun.security.x509.X509CertInfo;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.CodeSigner;
-import java.security.PrivateKey;
 import java.security.Timestamp;
 import java.security.cert.CertPath;
 import java.security.cert.CertificateFactory;
@@ -77,55 +66,9 @@ public class CodeSignerCreator {
             throw new Exception("Required validity is negative. Please specify the number of days for which the cert is valid after the start date.");
         }
 
-        // KeyTool#doGenKeyPair
-        final X500Name x500Name = new X500Name(dname);
-
+        // CertAndKeyGen self-signs with given validity and random serial; no need to patch X509CertInfo (API changed in 21)
         final KeyPair keyPair = new KeyPair(keyAlgName, sigAlgName, keysize);
-        final PrivateKey privKey = keyPair.getPrivateKey();
-
-        final X509Certificate oldCert = keyPair.getSelfCertificate(x500Name, notBefore, validity);
-
-        // KeyTool#doSelfCert
-        final byte[] encoded = oldCert.getEncoded();
-        final X509CertImpl certImpl = new X509CertImpl(encoded);
-        final X509CertInfo certInfo = (X509CertInfo) certImpl.get(X509CertImpl.NAME
-                + "." + X509CertImpl.INFO);
-
-        final Date notAfter = new Date(notBefore.getTime() + validity * 1000L * 24L * 60L * 60L);
-
-        final CertificateValidity interval = new CertificateValidity(notBefore,
-                notAfter);
-
-        certInfo.set(X509CertInfo.VALIDITY, interval);
-        certInfo.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(
-                new java.util.Random().nextInt() & 0x7fffffff));
-        certInfo.set(X509CertInfo.SUBJECT + "." + CertificateSubjectName.DN_NAME, x500Name);
-        certInfo.set(X509CertInfo.ISSUER + "." + CertificateIssuerName.DN_NAME, x500Name);
-
-        // The inner and outer signature algorithms have to match.
-        // The way we achieve that is really ugly, but there seems to be no
-        // other solution: We first sign the cert, then retrieve the
-        // outer sigalg and use it to set the inner sigalg
-        final X509CertImpl newCert = new X509CertImpl(certInfo);
-        newCert.sign(privKey, sigAlgName);
-        final AlgorithmId sigAlgid = (AlgorithmId) newCert.get(X509CertImpl.SIG_ALG);
-        certInfo.set(CertificateAlgorithmId.NAME + "." + CertificateAlgorithmId.ALGORITHM, sigAlgid);
-
-        certInfo.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
-
-        // FIXME Figure out extensions
-//        CertificateExtensions ext = createV3Extensions(
-//                null,
-//                (CertificateExtensions)certInfo.get(X509CertInfo.EXTENSIONS),
-//                v3ext,
-//                oldCert.getPublicKey(),
-//                null);
-//        certInfo.set(X509CertInfo.EXTENSIONS, ext);
-
-        final X509CertImpl finalCert = new X509CertImpl(certInfo);
-        finalCert.sign(privKey, sigAlgName);
-
-        return finalCert;
+        return keyPair.getSelfCertificate(new X500Name(dname), notBefore, validity);
     }
 
     /**
@@ -152,8 +95,7 @@ public class CodeSignerCreator {
     /**
      * A wrapper over JDK-internal CertAndKeyGen Class.
      * <p>
-     * This is an internal class whose package changed between OpenJDK 7 and 8.
-     * Use reflection to access the right thing.
+     * Reflection: not exported, keeps compile independent of JDK version.
      */
     public static class KeyPair {
 
@@ -162,7 +104,7 @@ public class CodeSignerCreator {
         public KeyPair(final String keyAlgName, final String sigAlgName, final int keySize) {
             try {
                 // keyPair = new CertAndKeyGen(keyAlgName, sigAlgName);
-                final Class<?> certAndKeyGenClass = Class.forName(getCertAndKeyGenClass());
+                final Class<?> certAndKeyGenClass = Class.forName("sun.security.tools.keytool.CertAndKeyGen");
                 final Constructor<?> constructor = certAndKeyGenClass.getDeclaredConstructor(String.class, String.class);
                 keyPair = constructor.newInstance(keyAlgName, sigAlgName);
 
@@ -172,17 +114,6 @@ public class CodeSignerCreator {
             } catch (final ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException |
                     IllegalAccessException | IllegalArgumentException | InvocationTargetException certAndKeyGenClassError) {
                 throw new AssertionError("Unable to use CertAndKeyGen class", certAndKeyGenClassError);
-            }
-        }
-
-        public PrivateKey getPrivateKey() {
-            try {
-                // return keyPair.getPrivateKey();
-                final Class<?> klass = keyPair.getClass();
-                final Method method = klass.getMethod("getPrivateKey");
-                return (PrivateKey) method.invoke(keyPair);
-            } catch (final NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException error) {
-                throw new AssertionError(error);
             }
         }
 
@@ -196,18 +127,6 @@ public class CodeSignerCreator {
                 throw new RuntimeException(ite.getCause());
             } catch (final NoSuchMethodException | IllegalAccessException | IllegalArgumentException error) {
                 throw new AssertionError(error);
-            }
-        }
-
-        private String getCertAndKeyGenClass() {
-            final String javaVersion = JavaSystemProperties.getJavaVersion();
-            if (javaVersion.startsWith("1.7")) {
-                return "sun.security.x509.CertAndKeyGen";
-            } else if (javaVersion.startsWith("1.8") ||
-                       javaVersion.matches("^(9|1[0-3])\\..*")) {
-                return "sun.security.tools.keytool.CertAndKeyGen";
-            } else {
-                throw new AssertionError("Unrecognized Java Version");
             }
         }
     }

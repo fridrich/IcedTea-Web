@@ -1,6 +1,7 @@
 package net.adoptopenjdk.icedteaweb.resources;
 
 import net.adoptopenjdk.icedteaweb.jnlp.version.VersionString;
+import net.adoptopenjdk.icedteaweb.resources.downloader.PackGzipUnpacker;
 import net.adoptopenjdk.icedteaweb.testing.ServerAccess;
 import net.adoptopenjdk.icedteaweb.testing.ServerLauncher;
 import net.jcip.annotations.NotThreadSafe;
@@ -12,6 +13,7 @@ import net.sourceforge.jnlp.util.logging.NoStdOutErrTest;
 import net.sourceforge.jnlp.util.logging.OutputController;
 import net.sourceforge.jnlp.util.logging.StdInOutErrController;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -22,13 +24,13 @@ import org.junit.rules.TemporaryFolder;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.concurrent.ExecutorService;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.jar.Pack200;
 import java.util.zip.GZIPOutputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -209,8 +211,11 @@ public class ResourceHandlerTest extends NoStdOutErrTest {
 
         final JarFile jarFile = new JarFile(jar.getAbsolutePath());
         final FileOutputStream fos = new FileOutputStream(pack);
-        final Pack200.Packer p = Pack200.newPacker();
-        p.pack(jarFile.getNative(), fos);
+        // Pack200 removed in JDK 14
+        Assume.assumeTrue(PackGzipUnpacker.isSupported());
+        final Object packer = Class.forName("java.util.jar.Pack200").getMethod("newPacker").invoke(null);
+        Class.forName("java.util.jar.Pack200$Packer").getMethod("pack", java.util.jar.JarFile.class, OutputStream.class)
+                .invoke(packer, jarFile.getNative(), fos);
         fos.close();
 
         final File packgz = new File(downloadDir, fileName + ".jar.pack.gz");

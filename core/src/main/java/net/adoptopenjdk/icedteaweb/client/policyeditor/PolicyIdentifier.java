@@ -34,7 +34,6 @@ statement from your version.
 package net.adoptopenjdk.icedteaweb.client.policyeditor;
 
 import net.adoptopenjdk.icedteaweb.i18n.Translator;
-import sun.security.provider.PolicyParser;
 
 import java.io.Serializable;
 import java.util.ArrayList;

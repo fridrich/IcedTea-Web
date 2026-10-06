@@ -154,6 +154,9 @@ for /f "tokens=*" %%a in ('"%JAVA%" -version 2^>^&1 1^>con:') do (
 if %fullversion% GEQ 9 (
   set "MODULAR_JDK=YES"
 )
+rem JDK 18-23 refuse System.setSecurityManager unless allowed at startup; 9-11 and 24+ do not start with it
+set "SM_ARGS="
+if %fullversion% GEQ 18 if %fullversion% LEQ 23 set "SM_ARGS=-Djava.security.manager=allow"
 set "_versionLine=" & set "_unquoted=" & set "fullversion="
 
 set "MODULAR_ARGS="
@@ -168,6 +171,7 @@ if "%MODULAR_JDK%" == "YES" (
   )
   rem add JDK9+ arg file:
   set "MODULAR_ARGS=!MODULAR_ARGS! "@%RUN_ARGS_LOCATION%""
+  set "MODULAR_ARGS=!MODULAR_ARGS! !SM_ARGS!"
 )
 
 

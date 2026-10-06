@@ -20,19 +20,51 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.jar.JarOutputStream;
-import java.util.jar.Pack200;
 import java.util.zip.GZIPInputStream;
 
 /**
  * Unpacker for PACK200 and Gzip streams.
+ * java.util.jar.Pack200 was removed in JDK 14, hence reflection.
  */
 public class PackGzipUnpacker implements StreamUnpacker {
+
+    private static final Method NEW_UNPACKER;
+    private static final Method UNPACK;
+
+    static {
+        Method newUnpacker = null;
+        Method unpack = null;
+        try {
+            newUnpacker = Class.forName("java.util.jar.Pack200").getMethod("newUnpacker");
+            unpack = Class.forName("java.util.jar.Pack200$Unpacker").getMethod("unpack", InputStream.class, JarOutputStream.class);
+        } catch (ReflectiveOperationException ignored) {
+        }
+        NEW_UNPACKER = newUnpacker;
+        UNPACK = unpack;
+    }
+
+    public static boolean isSupported() {
+        return UNPACK != null;
+    }
+
     @Override
     public InputStream unpack(InputStream input) throws IOException {
+        if (!isSupported()) {
+            throw new IOException("pack200 is not supported by this JVM");
+        }
         final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         try (final JarOutputStream outputStream = new JarOutputStream(buffer)) {
-            Pack200.newUnpacker().unpack(new GZIPInputStream(input), outputStream);
+            UNPACK.invoke(NEW_UNPACKER.invoke(null), new GZIPInputStream(input), outputStream);
+        } catch (IllegalAccessException e) {
+            throw new IOException(e);
+        } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof IOException) {
+                throw (IOException) e.getCause();
+            }
+            throw new IOException(e.getCause());
         }
         return new ByteArrayInputStream(buffer.toByteArray());
     }

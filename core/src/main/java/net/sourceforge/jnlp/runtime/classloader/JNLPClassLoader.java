@@ -14,6 +14,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package net.sourceforge.jnlp.runtime.classloader;
 
+import net.adoptopenjdk.icedteaweb.JavaSystemProperties;
 import net.adoptopenjdk.icedteaweb.commandline.CommandLineOptions;
 import net.adoptopenjdk.icedteaweb.http.CloseableConnection;
 import net.adoptopenjdk.icedteaweb.http.ConnectionFactory;
@@ -386,7 +387,20 @@ public class JNLPClassLoader extends URLClassLoader {
 
     private void setSecurity() throws LaunchException {
         URL codebase = UrlUtils.guessCodeBase(file);
-        this.security = securityDelegate.getClassLoaderSecurity(codebase);
+        this.security = checkEnforceable(securityDelegate.getClassLoaderSecurity(codebase));
+    }
+
+    /**
+     * Without a SecurityManager every permission set is effectively AllPermission,
+     * so anything less than all-permissions cannot be honoured.
+     */
+    private SecurityDesc checkEnforceable(final SecurityDesc desc) throws LaunchException {
+        if (JNLPRuntime.isSandboxUnsupported() && !SecurityDesc.ALL_PERMISSIONS.equals(desc.getSecurityType())) {
+            throw new LaunchException(file, null, FATAL, "Security Error", "Cannot run restricted application on this JVM.",
+                    "The application does not have all-permissions and this JVM (" + JavaSystemProperties.getJavaVersion()
+                            + ") has no Security Manager to sandbox it. Use Java 23 or older, or disable security (-nosecurity or deployment.nosecurity=true) if you trust it.");
+        }
+        return desc;
     }
 
     /**
@@ -823,7 +837,7 @@ public class JNLPClassLoader extends URLClassLoader {
 
         for (JARDesc jarDesc : validJars) {
             final URL codebase = getJnlpFileCodebase();
-            final SecurityDesc jarSecurity = securityDelegate.getCodebaseSecurityDesc(jarDesc, codebase);
+            final SecurityDesc jarSecurity = checkEnforceable(securityDelegate.getCodebaseSecurityDesc(jarDesc, codebase));
             jarLocationSecurityMap.put(new UrlKey(jarDesc.getLocation()), jarSecurity);
         }
 

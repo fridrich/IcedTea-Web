@@ -47,7 +47,7 @@
             </activation>
             <properties>
                 <!-- runtime exports as in the launchers, plus internals used by tests only -->
-                <itw.test.moduleArgs>@${maven.multiModuleProjectDirectory}/launchers/itw-modularjdk.args --add-exports=java.base/sun.security.tools.keytool=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED</itw.test.moduleArgs>
+                <itw.test.moduleArgs>@${maven.multiModuleProjectDirectory}/launchers/itw-modularjdk.args --add-opens=java.base/java.util=ALL-UNNAMED</itw.test.moduleArgs>
             </properties>
         </profile>
         <profile>

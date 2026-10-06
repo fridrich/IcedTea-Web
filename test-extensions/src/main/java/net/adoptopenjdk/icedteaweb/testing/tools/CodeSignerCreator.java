@@ -25,12 +25,16 @@
 
 package net.adoptopenjdk.icedteaweb.testing.tools;
 
-import sun.security.x509.X500Name;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.security.CodeSigner;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.SecureRandom;
 import java.security.Timestamp;
 import java.security.cert.CertPath;
 import java.security.cert.CertificateFactory;
@@ -42,7 +46,7 @@ import java.util.Date;
 public class CodeSignerCreator {
 
     /**
-     * Create an X509 Certificate signed using SHA1withRSA with a 2048 bit key.
+     * Create a self-signed X509 Certificate signed using SHA256withRSA with a 2048 bit key.
      *
      * @param dname     Domain Name to represent the certificate
      * @param notBefore The date by which the certificate starts being valid. Cannot be null.
@@ -50,12 +54,8 @@ public class CodeSignerCreator {
      * @return An X509 certificate setup with properties using the specified parameters.
      * @throws Exception
      */
-    private static X509Certificate createCert(final String dname, final Date notBefore, final int validity)
+    public static X509Certificate createCert(final String dname, final Date notBefore, final int validity)
             throws Exception {
-        final int keysize = 2048;
-        final String keyAlgName = "RSA";
-        final String sigAlgName = "SHA1withRSA";
-
         if (dname == null) {
             throw new Exception("Required DN is null. Please specify cert Domain Name via dname");
         }
@@ -66,9 +66,17 @@ public class CodeSignerCreator {
             throw new Exception("Required validity is negative. Please specify the number of days for which the cert is valid after the start date.");
         }
 
-        // CertAndKeyGen self-signs with given validity and random serial; no need to patch X509CertInfo (API changed in 21)
-        final KeyPair keyPair = new KeyPair(keyAlgName, sigAlgName, keysize);
-        return keyPair.getSelfCertificate(new X500Name(dname), notBefore, validity);
+        final KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+        generator.initialize(2048);
+        final KeyPair keyPair = generator.generateKeyPair();
+
+        final X500Name name = new X500Name(dname);
+        final Date notAfter = new Date(notBefore.getTime() + validity * 24L * 60L * 60L * 1000L);
+        final BigInteger serial = BigInteger.valueOf(new SecureRandom().nextInt() & 0x7fffffff);
+
+        return new JcaX509CertificateConverter().getCertificate(
+                new JcaX509v3CertificateBuilder(name, serial, notBefore, notAfter, name, keyPair.getPublic())
+                        .build(new JcaContentSignerBuilder("SHA256withRSA").build(keyPair.getPrivate())));
     }
 
     /**
@@ -90,44 +98,5 @@ public class CodeSignerCreator {
         final CertPath certPath = cf.generateCertPath(certs);
         final Timestamp certTimestamp = new Timestamp(jarEntryCert.getNotBefore(), certPath);
         return new CodeSigner(certPath, certTimestamp);
-    }
-
-    /**
-     * A wrapper over JDK-internal CertAndKeyGen Class.
-     * <p>
-     * Reflection: not exported, keeps compile independent of JDK version.
-     */
-    public static class KeyPair {
-
-        private /* CertAndKeyGen */ Object keyPair;
-
-        public KeyPair(final String keyAlgName, final String sigAlgName, final int keySize) {
-            try {
-                // keyPair = new CertAndKeyGen(keyAlgName, sigAlgName);
-                final Class<?> certAndKeyGenClass = Class.forName("sun.security.tools.keytool.CertAndKeyGen");
-                final Constructor<?> constructor = certAndKeyGenClass.getDeclaredConstructor(String.class, String.class);
-                keyPair = constructor.newInstance(keyAlgName, sigAlgName);
-
-                // keyPair.generate(keySize);
-                final Method generate = certAndKeyGenClass.getMethod("generate", int.class);
-                generate.invoke(keyPair, keySize);
-            } catch (final ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException |
-                    IllegalAccessException | IllegalArgumentException | InvocationTargetException certAndKeyGenClassError) {
-                throw new AssertionError("Unable to use CertAndKeyGen class", certAndKeyGenClassError);
-            }
-        }
-
-        public X509Certificate getSelfCertificate(final X500Name name, final Date notBefore, final long validityInDays) {
-            try {
-                // return keyPair.getSelfCertificate(name, notBefore, validityInDays * 24L * 60L * 60L);
-                final Class<?> klass = keyPair.getClass();
-                final Method method = klass.getMethod("getSelfCertificate", X500Name.class, Date.class, long.class);
-                return (X509Certificate) method.invoke(keyPair, name, notBefore, validityInDays * 24L * 60L * 60L);
-            } catch (final InvocationTargetException ite) {
-                throw new RuntimeException(ite.getCause());
-            } catch (final NoSuchMethodException | IllegalAccessException | IllegalArgumentException error) {
-                throw new AssertionError(error);
-            }
-        }
     }
 }

@@ -103,7 +103,6 @@ import static net.sourceforge.jnlp.LaunchException.FATAL;
 import static net.sourceforge.jnlp.cache.NativeLibraryStorage.NATIVE_LIB_EXT_DYLIB;
 import static net.sourceforge.jnlp.cache.NativeLibraryStorage.NATIVE_LIB_EXT_JNILIB;
 import static net.sourceforge.jnlp.util.UrlUtils.FILE_PROTOCOL;
-import static sun.security.util.SecurityConstants.FILE_READ_ACTION;
 
 /**
  * Classloader that takes it's resources from a JNLP file. If the JNLP file
@@ -116,6 +115,9 @@ import static sun.security.util.SecurityConstants.FILE_READ_ACTION;
  * @version $Revision: 1.20 $
  */
 public class JNLPClassLoader extends URLClassLoader {
+
+    // values of sun.security.util.SecurityConstants
+    private static final String FILE_READ_ACTION = "read";
 
     private static final Logger LOG = LoggerFactory.getLogger(JNLPClassLoader.class);
 

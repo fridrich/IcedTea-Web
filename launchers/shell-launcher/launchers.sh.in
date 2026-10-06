@@ -8,7 +8,6 @@ if echo "'$*'" | grep -e "-verbose" ; then
   set -x
 fi
 
-NASHORN=lib/ext/nashorn.jar
 JRE=@JRE@
 LAUNCHER_FLAGS=-Xms8m
 MAIN_CLASS=@MAIN_CLASS@
@@ -131,19 +130,15 @@ fi
 set -u
 LAUNCHER_BOOTCLASSPATH="-Xbootclasspath/a:$JAVAWS_JAR:$TAGSOUP_JAR:$RHINO_JAR:$MSLINKS_JAR:$IPADDRESS_JAR:$COMMONS_COMPRESS_JAR:$COMMONS_IO_JAR:$COMMONS_LANG3_JAR"
 
-# Fix classpaths for custom JRE:
+# Select java (custom JRE or default):
 if [ "x$CUSTOM_JRE" != "x" ] ; then
   if [ -e "$CUSTOM_JRE" -a -e "$CUSTOM_JRE/bin/java" ] ; then
     JAVA=$CUSTOM_JRE/bin/java
-    CP=$CUSTOM_JRE/lib/rt.jar:$CUSTOM_JRE/lib/ext/jfxrt.jar
-    LAUNCHER_BOOTCLASSPATH=$LAUNCHER_BOOTCLASSPATH:$CUSTOM_JRE/$NASHORN
   else
-    echo "Your custom JRE $CUSTOM_JRE read from deployment.properties under key $PROPERTY_NAME as $CUSTOM_JRE is not valid. Using default ($JRE, $CP) in attempt to start. Please fix this."
+    echo "Your custom JRE $CUSTOM_JRE read from deployment.properties under key $PROPERTY_NAME as $CUSTOM_JRE is not valid. Using default ($JRE) in attempt to start. Please fix this."
   fi
 else
   JAVA=$JRE/bin/java
-  CP=$JRE/lib/rt.jar:$JRE/lib/ext/jfxrt.jar
-  LAUNCHER_BOOTCLASSPATH="$LAUNCHER_BOOTCLASSPATH:$JRE/$NASHORN"
 fi;
 
 
@@ -236,7 +231,7 @@ done
 
 COMMAND[k]="-classpath"
 k=$((k+1))
-COMMAND[k]="${CP}"
+COMMAND[k]=""
 k=$((k+1))
 
 COMMAND[k]="-Dicedtea-web.bin.name=`basename $SCRIPT_SOURCE`"

@@ -399,11 +399,8 @@ public class JvmUtils {
             put("--add-reads=java.naming", moduleArgs("ALL-UNNAMED", "java.desktop"));
 
             put("--add-exports=java.desktop/sun.awt", moduleArgs("ALL-UNNAMED", "java.desktop"));
-            put("--add-exports=java.desktop/javax.jnlp", moduleArgs("ALL-UNNAMED", "java.desktop"));
 
-            put("--add-exports=java.base/com.sun.net.ssl.internal.ssl", moduleArgs("ALL-UNNAMED", "java.desktop"));
             put("--add-exports=java.base/sun.net.www.protocol.jar", moduleArgs("ALL-UNNAMED", "java.desktop"));
-            put("--add-exports=java.base/sun.security.action", moduleArgs("ALL-UNNAMED", "java.desktop"));
             put("--add-exports=java.base/sun.security.provider", moduleArgs("ALL-UNNAMED", "java.desktop"));
             put("--add-exports=java.base/sun.security.util", moduleArgs("ALL-UNNAMED", "java.desktop"));
             put("--add-exports=java.base/sun.security.validator", moduleArgs("ALL-UNNAMED", "java.desktop"));
@@ -412,7 +409,6 @@ public class JvmUtils {
             put("--add-exports=java.base/sun.net.www.protocol.http", moduleArgs("ALL-UNNAMED", "java.desktop"));
 
             put("--add-exports=java.desktop/sun.awt.X11", moduleArgs("ALL-UNNAMED", "java.desktop"));
-            put("--add-exports=java.desktop/sun.applet", moduleArgs("ALL-UNNAMED", "java.desktop", "jdk.jsobject"));
             put("--add-exports=java.naming/com.sun.jndi.toolkit.url", moduleArgs("ALL-UNNAMED", "java.desktop"));
         }};
     }

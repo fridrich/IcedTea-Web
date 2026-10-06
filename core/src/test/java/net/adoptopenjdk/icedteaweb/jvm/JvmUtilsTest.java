@@ -144,7 +144,7 @@ public class JvmUtilsTest {
 
         assertEquals(JvmUtils.getPredefinedJavaModulesVMArgumentsMap().size(), result.size());
         assertTrue(result.contains("--add-reads=java.base=ALL-UNNAMED,java.desktop"));
-        assertTrue(result.contains("--add-exports=java.desktop/sun.applet=ALL-UNNAMED,java.desktop,jdk.jsobject"));
+        assertTrue(result.contains("--add-exports=java.desktop/sun.awt=ALL-UNNAMED,java.desktop"));
     }
 
     @Test

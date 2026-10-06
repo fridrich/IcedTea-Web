@@ -136,8 +136,8 @@ fn main() {
 }
 
 fn compose_arguments(java_dir: &std::path::PathBuf, original_args: &std::vec::Vec<String>, os: &os_access::Os) -> Vec<String> {
-    let bootcp = jars_helper::get_bootclasspath(&java_dir, os);
-    let cp = jars_helper::get_classpath(&java_dir, os);
+    let bootcp = jars_helper::get_bootclasspath(os);
+    let cp = jars_helper::get_classpath(os);
     let current_name = dirs_paths_helper::current_program_name();
     let current_bin = dirs_paths_helper::current_program();
     let mut info2 = String::new();

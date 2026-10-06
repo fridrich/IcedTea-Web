@@ -219,7 +219,7 @@
                     <reuseForks>false</reuseForks>
                     <!-- limiting memory for travis which uses docker to run builds -->
                     <!-- if memory is not limited the forked JVMs use too much memory and are killed by the OS -->
-                    <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
+                    <argLine>@{argLine} ${itw.test.moduleArgs} ${itw.test.smArgs} -Xmx1024m</argLine>
                 </configuration>
             </plugin>
 

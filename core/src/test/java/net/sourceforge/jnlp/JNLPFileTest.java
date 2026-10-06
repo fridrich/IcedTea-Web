@@ -39,6 +39,7 @@ import net.adoptopenjdk.icedteaweb.jnlp.element.resource.ResourcesDesc;
 import net.adoptopenjdk.icedteaweb.jnlp.element.security.ApplicationPermissionLevel;
 import net.adoptopenjdk.icedteaweb.testing.annotations.Bug;
 import net.adoptopenjdk.icedteaweb.testing.mock.MockJNLPFile;
+import net.adoptopenjdk.icedteaweb.resources.downloader.PackGzipUnpacker;
 import net.adoptopenjdk.icedteaweb.xmlparser.ParseException;
 import net.sourceforge.jnlp.util.logging.NoStdOutErrTest;
 import org.junit.Assert;
@@ -188,7 +189,7 @@ public class JNLPFileTest extends NoStdOutErrTest{
         JNLPFile jnlpFile = new JNLPFile(is, codeBase, new ParserSettings(false,false,false));
         DownloadOptions downloadOptions = jnlpFile.getDownloadOptions();
 
-        Assert.assertTrue(downloadOptions.useExplicitPack());
+        Assert.assertEquals(PackGzipUnpacker.isSupported(), downloadOptions.useExplicitPack()); // no Pack200 since JDK 14
         Assert.assertTrue(downloadOptions.useExplicitVersion());
     }
 

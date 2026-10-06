@@ -45,6 +45,8 @@ import java.util.Date;
 
 public class CodeSignerCreator {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     /**
      * Create a self-signed X509 Certificate signed using SHA256withRSA with a 2048 bit key.
      *
@@ -72,7 +74,7 @@ public class CodeSignerCreator {
 
         final X500Name name = new X500Name(dname);
         final Date notAfter = new Date(notBefore.getTime() + validity * 24L * 60L * 60L * 1000L);
-        final BigInteger serial = BigInteger.valueOf(new SecureRandom().nextInt() & 0x7fffffff);
+        final BigInteger serial = BigInteger.valueOf(RANDOM.nextInt() & 0x7fffffff);
 
         return new JcaX509CertificateConverter().getCertificate(
                 new JcaX509v3CertificateBuilder(name, serial, notBefore, notAfter, name, keyPair.getPublic())

@@ -98,15 +98,21 @@ public class UnsignedAppletTrustConfirmationTest {
     };
     
     @BeforeClass
-    public static void initUrl() throws MalformedURLException {
+    public static void setUpClass() throws IOException {
+        backupAppTrust(); // first, so restoreAppTrust works even if URL setup fails
+        initUrl();
+        initUrlsX123();
+        initUrlsY12345678();
+    }
+
+    private static void initUrl() throws MalformedURLException {
         url=new URL(surl1);
         url4=new URL(url41+url42);
     }
    
    private static File backup;
 
-    @BeforeClass
-    public static void backupAppTrust() throws IOException{
+    private static void backupAppTrust() throws IOException{
         PathsAndFiles.APPLET_TRUST_SETTINGS_USER.getFile().createNewFile();
         backup = File.createTempFile("appletExtendedSecurity", "itwUnittest");
         backup.deleteOnExit();
@@ -205,8 +211,7 @@ public class UnsignedAppletTrustConfirmationTest {
     private static URL urlY7;
     private static URL urlY8;
     
-    @BeforeClass
-    public static void initUrlsX123() throws MalformedURLException, IOException {
+    private static void initUrlsX123() throws MalformedURLException, IOException {
         urlX1 = new URL("http://&#10;does&#32;not&#32;matter&#32;is&#32;ok");
         try {
             urlX2 = new URL("http://\ndoes not matter is harmful");
@@ -218,8 +223,7 @@ public class UnsignedAppletTrustConfirmationTest {
         }
     }
 
-    @BeforeClass
-    public static void initUrlsY12345678() throws MalformedURLException, IOException {
+    private static void initUrlsY12345678() throws MalformedURLException, IOException {
         try {
             urlY1 = new URL("http://som\\EeUrl.cz/aa");
             urlY2 = new URL("http://some\\QUrl.cz/aa");

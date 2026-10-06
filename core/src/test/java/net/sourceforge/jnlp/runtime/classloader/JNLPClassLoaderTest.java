@@ -98,24 +98,16 @@ public class JNLPClassLoaderTest extends NoStdOutErrTest {
     private static String askUser;
 
     @BeforeClass
-    public static void setPermissions() {
+    public static void setPermissionsAndNoDialogs() {
         level = AppletStartupSecuritySettings.getInstance().getSecurityLevel();
         getConfiguration().setProperty(ConfigurationConstants.KEY_SECURITY_LEVEL, AppletSecurityLevel.ALLOW_UNSIGNED.toChars());
-    }
-
-    @AfterClass
-    public static void resetPermissions() {
-        getConfiguration().setProperty(ConfigurationConstants.KEY_SECURITY_LEVEL, level.toChars());
-    }
-
-    @BeforeClass
-    public static void noDialogs() {
         askUser = getConfiguration().getProperty(ConfigurationConstants.KEY_SECURITY_PROMPT_USER);
         getConfiguration().setProperty(ConfigurationConstants.KEY_SECURITY_PROMPT_USER, Boolean.toString(false));
     }
 
     @AfterClass
-    public static void restoreDialogs() {
+    public static void resetPermissionsAndDialogs() {
+        getConfiguration().setProperty(ConfigurationConstants.KEY_SECURITY_LEVEL, level.toChars());
         getConfiguration().setProperty(ConfigurationConstants.KEY_SECURITY_PROMPT_USER, askUser);
     }
 

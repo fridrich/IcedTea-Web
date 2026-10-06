@@ -167,14 +167,13 @@ public class PolicyIdentifier implements Comparable<PolicyIdentifier>, Serializa
     }
 
     private static <T extends Comparable<T>> int compareComparable(T a, T b) {
-        if (a == null && b != null) {
-            return 1;
-        } else if (a != null && b == null) {
-            return -1;
-        } else if (a == b) {
+        if (a == b) {
             return 0;
-        } else {
-            return a.compareTo(b);
+        } else if (a == null) {
+            return 1;
+        } else if (b == null) {
+            return -1;
         }
+        return a.compareTo(b);
     }
 }

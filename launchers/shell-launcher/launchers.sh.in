@@ -74,11 +74,20 @@ if [ ! "x$JAVA_HOME" = "x" ] ; then
   echo "Warning! JAVA_HOME of $JAVA_HOME in play!"
   CUSTOM_JRE=$JAVA_HOME
 fi
+# openSUSE alljava.sh sets JRE_HOME always, JAVA_HOME only with a JDK
+if [ "x$CUSTOM_JRE" = "x" -a ! "x$JRE_HOME" = "x" ] ; then
+  CUSTOM_JRE=$JRE_HOME
+fi
 #check in $path
 if [ "x$CUSTOM_JRE" = "x" ] ; then
   while IFS=: read -d: -r path_entry; do
     if [ -e "${path_entry}/java" ] ; then
-     CUSTOM_JRE=$(dirname $(dirname $(readlink -f "$path_entry/java")))
+     JAVA_BIN=$(readlink -f "$path_entry/java")
+     # openSUSE libalternatives: java -> alts, ask alts for the real binary
+     if [ "$(basename "$JAVA_BIN")" == "alts" ] ; then
+       JAVA_BIN=$(readlink -f "$(alts -t java)")
+     fi
+     CUSTOM_JRE=$(dirname $(dirname "$JAVA_BIN"))
     fi;
   done <<< "${PATH}"
 

@@ -16,55 +16,28 @@
 
 package net.adoptopenjdk.icedteaweb.resources.downloader;
 
+import org.apache.commons.compress.java.util.jar.Pack200;
+import org.apache.commons.io.IOUtils;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.jar.JarOutputStream;
 import java.util.zip.GZIPInputStream;
 
 /**
  * Unpacker for PACK200 and Gzip streams.
- * java.util.jar.Pack200 was removed in JDK 14, hence reflection.
+ * Pack200 from commons-compress: java.util.jar.Pack200 was removed in JDK 14.
  */
 public class PackGzipUnpacker implements StreamUnpacker {
-
-    private static final Method NEW_UNPACKER;
-    private static final Method UNPACK;
-
-    static {
-        Method newUnpacker = null;
-        Method unpack = null;
-        try {
-            newUnpacker = Class.forName("java.util.jar.Pack200").getMethod("newUnpacker");
-            unpack = Class.forName("java.util.jar.Pack200$Unpacker").getMethod("unpack", InputStream.class, JarOutputStream.class);
-        } catch (ReflectiveOperationException ignored) {
-        }
-        NEW_UNPACKER = newUnpacker;
-        UNPACK = unpack;
-    }
-
-    public static boolean isSupported() {
-        return UNPACK != null;
-    }
-
     @Override
     public InputStream unpack(InputStream input) throws IOException {
-        if (!isSupported()) {
-            throw new IOException("pack200 is not supported by this JVM");
-        }
         final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         try (final JarOutputStream outputStream = new JarOutputStream(buffer)) {
-            UNPACK.invoke(NEW_UNPACKER.invoke(null), new GZIPInputStream(input), outputStream);
-        } catch (IllegalAccessException e) {
-            throw new IOException(e);
-        } catch (InvocationTargetException e) {
-            if (e.getCause() instanceof IOException) {
-                throw (IOException) e.getCause();
-            }
-            throw new IOException(e.getCause());
+            // not a FilterInputStream: unpacker would reflectively unwrap it, denied on JDK 17+
+            final InputStream packed = new ByteArrayInputStream(IOUtils.toByteArray(new GZIPInputStream(input)));
+            Pack200.newUnpacker().unpack(packed, outputStream);
         }
         return new ByteArrayInputStream(buffer.toByteArray());
     }

@@ -154,6 +154,9 @@ fn get_bootcp_members(jre_path: &std::path::PathBuf, os: &os_access::Os) -> Vec<
     append_if_exists(hardcoded_paths::get_tagsoup(), os, &mut cp_parts);
     append_if_exists(hardcoded_paths::get_mslinks(), os, &mut cp_parts);
     append_if_exists(hardcoded_paths::get_ipaddress(), os, &mut cp_parts);
+    append_if_exists(hardcoded_paths::get_commons_compress(), os, &mut cp_parts);
+    append_if_exists(hardcoded_paths::get_commons_io(), os, &mut cp_parts);
+    append_if_exists(hardcoded_paths::get_commons_lang3(), os, &mut cp_parts);
     let mut nashorn_jar = jre_path.clone();
     nashorn_jar.push("lib");
     nashorn_jar.push("ext");

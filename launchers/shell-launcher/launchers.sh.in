@@ -21,6 +21,9 @@ readonly JAVAWS_SRC=@JAVAWS_JAR@
 readonly TAGSOUP_SRC=@TAGSOUP_JAR@
 readonly RHINO_SRC=@RHINO_JAR@
 readonly IPADDRESS_SRC=@IPADDRESS_JAR@
+readonly COMMONS_COMPRESS_SRC=@COMMONS_COMPRESS_JAR@
+readonly COMMONS_IO_SRC=@COMMONS_IO_JAR@
+readonly COMMONS_LANG3_SRC=@COMMONS_LANG3_JAR@
 # windows only: (cywin usage?); need to declare it anyway
 readonly MSLINKS_SRC=@MSLINKS_JAR@
 
@@ -110,6 +113,9 @@ if [ "x$ITW_LIBS" == "xBUNDLED" -o ! "x$ITW_HOME" = "x" ] ; then
   readonly TAGSOUP_JAR=""
   readonly MSLINKS_JAR=""
   readonly IPADDRESS_JAR=""
+  readonly COMMONS_COMPRESS_JAR=""
+  readonly COMMONS_IO_JAR=""
+  readonly COMMONS_LANG3_JAR=""
   echo "warning, using portable itw from $ITW_HOME"
 else
   readonly JAVAWS_JAR="$JAVAWS_SRC"
@@ -118,9 +124,12 @@ else
   readonly TAGSOUP_JAR="$TAGSOUP_SRC"
   readonly MSLINKS_JAR="$MSLINKS_SRC"
   readonly IPADDRESS_JAR="$IPADDRESS_SRC"
+  readonly COMMONS_COMPRESS_JAR="$COMMONS_COMPRESS_SRC"
+  readonly COMMONS_IO_JAR="$COMMONS_IO_SRC"
+  readonly COMMONS_LANG3_JAR="$COMMONS_LANG3_SRC"
 fi
 set -u
-LAUNCHER_BOOTCLASSPATH="-Xbootclasspath/a:$JAVAWS_JAR:$TAGSOUP_JAR:$RHINO_JAR:$MSLINKS_JAR:$IPADDRESS_JAR"
+LAUNCHER_BOOTCLASSPATH="-Xbootclasspath/a:$JAVAWS_JAR:$TAGSOUP_JAR:$RHINO_JAR:$MSLINKS_JAR:$IPADDRESS_JAR:$COMMONS_COMPRESS_JAR:$COMMONS_IO_JAR:$COMMONS_LANG3_JAR"
 
 # Fix classpaths for custom JRE:
 if [ "x$CUSTOM_JRE" != "x" ] ; then

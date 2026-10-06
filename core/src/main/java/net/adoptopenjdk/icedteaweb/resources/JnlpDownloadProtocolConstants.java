@@ -1,7 +1,5 @@
 package net.adoptopenjdk.icedteaweb.resources;
 
-import net.adoptopenjdk.icedteaweb.resources.downloader.PackGzipUnpacker;
-
 /**
  * ...
  */
@@ -16,7 +14,7 @@ public interface JnlpDownloadProtocolConstants {
     String ERROR_MIME_TYPE = "application/x-java-jnlp-error";
     String JAR_DIFF_MIME_TYPE = "application/x-java-archive-dif";
 
-    String PACK_200_OR_GZIP = PackGzipUnpacker.isSupported() ? "pack200-gzip, gzip" : "gzip";
+    String PACK_200_OR_GZIP = "pack200-gzip, gzip";
     String INVALID_HTTP_RESPONSE = "Invalid Http response";
 
     String VERSION_ID_QUERY_PARAM = "version-id";

@@ -39,7 +39,6 @@ import net.adoptopenjdk.icedteaweb.jnlp.version.VersionString;
 import net.adoptopenjdk.icedteaweb.logging.Logger;
 import net.adoptopenjdk.icedteaweb.logging.LoggerFactory;
 import net.adoptopenjdk.icedteaweb.manifest.ManifestAttributesReader;
-import net.adoptopenjdk.icedteaweb.resources.downloader.PackGzipUnpacker;
 import net.adoptopenjdk.icedteaweb.xmlparser.ParseException;
 import net.adoptopenjdk.icedteaweb.xmlparser.XMLParser;
 import net.adoptopenjdk.icedteaweb.xmlparser.XmlNode;
@@ -828,7 +827,7 @@ public class JNLPFile {
      */
     public DownloadOptions getDownloadOptions() {
         final ResourcesDesc desc = getResources();
-        final boolean usePack = parseBoolean(desc.getPropertiesMap().get("jnlp.packEnabled")) && PackGzipUnpacker.isSupported();
+        final boolean usePack = parseBoolean(desc.getPropertiesMap().get("jnlp.packEnabled"));
         final boolean useVersion = parseBoolean(desc.getPropertiesMap().get("jnlp.versionEnabled"));
         return new DownloadOptions(usePack, useVersion);
     }

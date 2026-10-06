@@ -39,7 +39,13 @@ mkdir -p "$BIN_TARGET_DIR"
 mkdir -p "$ICO_TARGET_DIR"
 mkdir -p "$SPLASH_TARGET_DIR"
 
-publishInternalLib "$JAVAWS_SRC" "$ITW_TARGET_DIR" "javaws.jar"
+if [ "x$ITW_UNSHADED" == "xtrue" ] ; then
+  for JAR in $JAVAWS_SRC ; do
+    publishInternalLib "$JAR" "$ITW_TARGET_DIR" "`basename $JAR | sed 's/-[0-9][^/]*\.jar$/.jar/'`"
+  done
+else
+  publishInternalLib "$JAVAWS_SRC" "$ITW_TARGET_DIR" "javaws.jar"
+fi
 if [ ! "x$ITW_LIBS" == "xDISTRIBUTION" ] ; then
   publishInternalLib "$JAVAWS_SRC_SRC" "$ITW_TARGET_DIR" "javaws-srcs.jar"
 fi
@@ -82,7 +88,9 @@ if [ $ITW_LIBS == "DISTRIBUTION" ] ; then
   set +x
   echo "not creating images in $ITW_LIBS mode; launchers are built against your system libraries, for theirs future locations"
   echo "To install this system-linked image, you must copy:"
-  echo "cp ${RESOURCES_SRC_TO_DEST["$JAVAWS_SRC"]} `cutIfNecessary ${RESOURCES_SRC_TO_DEST["$JAVAWS_SRC"]}`"
+  for JAR in $JAVAWS_SRC ; do
+    echo "cp ${RESOURCES_SRC_TO_DEST["$JAR"]} `cutIfNecessary ${RESOURCES_SRC_TO_DEST["$JAR"]}`"
+  done
   echo "cp ${RESOURCES_SRC_TO_DEST["$SPLASH_PNG_SRC"]} `cutIfNecessary ${RESOURCES_SRC_TO_DEST["$SPLASH_PNG_SRC"]}`"
   echo "cp ${RESOURCES_SRC_TO_DEST["$MODULARJDK_ARGS_FILE_SRC"]} `cutIfNecessary ${RESOURCES_SRC_TO_DEST["$MODULARJDK_ARGS_FILE_SRC"]}`"
   echo "cp ${RESOURCES_SRC_TO_DEST["$JAVAWS_ICO_SRC"]} `cutIfNecessary ${RESOURCES_SRC_TO_DEST["$JAVAWS_ICO_SRC"]}`"

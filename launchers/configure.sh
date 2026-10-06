@@ -74,10 +74,13 @@ else
 fi
 
 if [ "x$ITW_LIBS" == "xDISTRIBUTION" ] ; then
-  readonly JAVAWS_SRC=`ls $PROJECT_TOP/artifact-no-dependencies/target/icedtea-web-no-dependencies-*.jar | grep -v sources | grep -v javadoc | grep -v shaded`
-  readonly OPTIONS_COMMAND="$JRE/bin/java -cp 
-  `ls $PROJECT_TOP/artifact-all-dependencies/target/icedtea-web-all-dependencies-*.jar | grep -v sources | grep -v javadoc | grep -v shaded`
-  net.adoptopenjdk.icedteaweb.commandline.CommandLineOptionsDefinition" ;
+  if [ "x$ITW_UNSHADED" == "xtrue" ] ; then
+    # module jars instead of javaws.jar; artifact-* modules (shade) need not be built
+    readonly JAVAWS_SRC=`ls $PROJECT_TOP/{jnlp-api,common,xml-parser,core}/target/*.jar | grep -v -e sources -e javadoc -e tests`
+  else
+    readonly JAVAWS_SRC=`ls $PROJECT_TOP/artifact-no-dependencies/target/icedtea-web-no-dependencies-*.jar | grep -v sources | grep -v javadoc | grep -v shaded`
+  fi
+  readonly OPTIONS_COMMAND="$JRE/bin/java -cp `echo $JAVAWS_SRC | tr ' ' :` net.adoptopenjdk.icedteaweb.commandline.CommandLineOptionsDefinition" ;
 else
   readonly JAVAWS_SRC=`ls $PROJECT_TOP/artifact-all-dependencies/target/icedtea-web-all-dependencies-*.jar | grep -v sources | grep -v javadoc | grep -v shaded`
   readonly JAVAWS_SRC_SRC=`ls $PROJECT_TOP/artifact-all-dependencies/target/icedtea-web-all-dependencies-*.jar | grep sources`

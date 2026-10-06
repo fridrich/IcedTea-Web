@@ -148,7 +148,10 @@ fn filter_in_key(key: &str, os: &os_access::Os, vec: &mut Vec<std::path::PathBuf
 
 fn get_bootcp_members(os: &os_access::Os) -> Vec<std::path::PathBuf> {
     let mut cp_parts = Vec::new();
-    cp_parts.push(resolve_jar(hardcoded_paths::get_javaws(), os));
+    // JAVAWS_JAR may be a path list (unshaded module jars)
+    for jar in std::env::split_paths(hardcoded_paths::get_javaws()) {
+        cp_parts.push(resolve_jar(jar.to_str().expect("JAVAWS_JAR is not unicode"), os));
+    }
     append_if_exists(hardcoded_paths::get_rhino(), os, &mut cp_parts);
     append_if_exists(hardcoded_paths::get_tagsoup(), os, &mut cp_parts);
     append_if_exists(hardcoded_paths::get_mslinks(), os, &mut cp_parts);

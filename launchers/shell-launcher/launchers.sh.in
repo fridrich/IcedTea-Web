@@ -115,7 +115,13 @@ if [ "x$ITW_LIBS" == "xBUNDLED" -o ! "x$ITW_HOME" = "x" ] ; then
   readonly BINARY_LOCATION="$ITW_HOME/bin/`basename \"$BINARY_LOCATION\"`"
   readonly SPLASH_PNG="`locallib \"$SPLASH_PNG\"`"
   readonly RUN_ARGS_LOCATION="`locallib \"$RUN_ARGS_LOCATION\"`"
-  readonly JAVAWS_JAR="`locallib  \"$JAVAWS_SRC\"`"
+  # JAVAWS_SRC may be a :-list (unshaded module jars)
+  IFS=: read -ra JAVAWS_SRCS <<< "$JAVAWS_SRC"
+  JAVAWS_JAR=""
+  for JAR in "${JAVAWS_SRCS[@]}" ; do
+    JAVAWS_JAR="$JAVAWS_JAR${JAVAWS_JAR:+:}`locallib \"$JAR\"`"
+  done
+  readonly JAVAWS_JAR
   #in fat jar with dependencies
   readonly RHINO_JAR=""
   readonly TAGSOUP_JAR=""

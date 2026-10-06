@@ -29,7 +29,11 @@ function build() {
   fi
   export JRE
   export ITW_LIBS
-  export JAVAWS_JAR=`cutIfNecessary ${RESOURCES_SRC_TO_DEST["$JAVAWS_SRC"]}`
+  JAVAWS_JAR=""
+  for JAR in $JAVAWS_SRC ; do
+    JAVAWS_JAR="$JAVAWS_JAR${JAVAWS_JAR:+:}`cutIfNecessary ${RESOURCES_SRC_TO_DEST["$JAR"]}`"
+  done
+  export JAVAWS_JAR
   export SPLASH_PNG=`cutIfNecessary ${RESOURCES_SRC_TO_DEST["$SPLASH_PNG_SRC"]}`
   export MODULARJDK_ARGS_LOCATION=`cutIfNecessary ${RESOURCES_SRC_TO_DEST["$MODULARJDK_ARGS_FILE_SRC"]}`
   BUILD_DIR=$TARGET/launcher.in.$PROGRAM_NAME

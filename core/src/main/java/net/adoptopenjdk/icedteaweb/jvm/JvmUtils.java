@@ -1,5 +1,7 @@
 package net.adoptopenjdk.icedteaweb.jvm;
 
+import net.adoptopenjdk.icedteaweb.logging.Logger;
+import net.adoptopenjdk.icedteaweb.logging.LoggerFactory;
 import net.adoptopenjdk.icedteaweb.xmlparser.ParseException;
 import net.sourceforge.jnlp.runtime.JNLPRuntime;
 
@@ -11,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static java.lang.Character.isWhitespace;
@@ -25,6 +28,8 @@ import static net.adoptopenjdk.icedteaweb.StringUtils.isBlank;
 import static net.sourceforge.jnlp.config.ConfigurationConstants.KEY_JVM_ARGS_WHITELIST;
 
 public class JvmUtils {
+
+    private static final Logger LOG = LoggerFactory.getLogger(JvmUtils.class);
     private static final Set<String> VALID_VM_ARGUMENTS = unmodifiableSet(new HashSet<>(asList(getValidVMArguments())));
     private static final List<String> VALID_STARTING_ARGUMENTS = unmodifiableList(asList(getValidStartingVMArguments()));
     private static final List<String> VALID_STARTING_JAVA_MODULES_ARGUMENTS = unmodifiableList(asList(getValidStartingJavaModuleVMArguments()));
@@ -415,6 +420,63 @@ public class JvmUtils {
 
     private static Set<String> moduleArgs(final String... args) {
         return new LinkedHashSet<>(asList(args));
+    }
+
+    /**
+     * Removes modules this JVM lacks from --add-modules: a missing one aborts JVM startup,
+     * while --add-exports/--add-opens to a missing module only warn.
+     * E.g. JOSM's JNLP asks for javafx.* which plain OpenJDK does not have.
+     */
+    public static List<String> dropMissingModules(final List<String> vmArgs) {
+        final List<String> result = new ArrayList<>();
+        boolean valueFollows = false;
+        for (final String arg : vmArgs) {
+            if (valueFollows) {
+                valueFollows = false;
+                final String kept = presentModules(arg);
+                if (kept.isEmpty()) {
+                    result.remove(result.size() - 1); // the bare --add-modules
+                } else {
+                    result.add(kept);
+                }
+            } else if (arg.equals(ADD_MODULES)) {
+                valueFollows = true;
+                result.add(arg);
+            } else if (arg.startsWith(ADD_MODULES + "=")) {
+                final String kept = presentModules(arg.substring(ADD_MODULES.length() + 1));
+                if (!kept.isEmpty()) {
+                    result.add(ADD_MODULES + "=" + kept);
+                }
+            } else {
+                result.add(arg);
+            }
+        }
+        return result;
+    }
+
+    private static final String ADD_MODULES = "--add-modules";
+
+    private static String presentModules(final String commaList) {
+        final StringBuilder kept = new StringBuilder();
+        for (final String module : commaList.split(",")) {
+            if (module.startsWith("ALL-") || isSystemModule(module)) {
+                kept.append(kept.length() == 0 ? "" : ",").append(module);
+            } else {
+                LOG.warn("Dropping module {} from --add-modules, not present in this JVM", module);
+            }
+        }
+        return kept.toString();
+    }
+
+    // reflection: compiled for Java 8, which has no modules (and no --add-modules either)
+    static boolean isSystemModule(final String name) {
+        try {
+            final Class<?> finderClass = Class.forName("java.lang.module.ModuleFinder");
+            final Object finder = finderClass.getMethod("ofSystem").invoke(null);
+            return ((Optional<?>) finderClass.getMethod("find", String.class).invoke(finder, name)).isPresent();
+        } catch (ReflectiveOperationException e) {
+            return true;
+        }
     }
 
     /**
